@@ -1,41 +1,52 @@
+import logging
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
+from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, CommandHandler, filters
 
-# Bot tokeningizni shu yerga yozing
-TOKEN = "7881698949:AAEMr_wFyMbE0lDtP5PegK8QmDuqhkLHKiw"
+TOKEN = "YOUR_BOT_TOKEN_HERE"  # Bu yerga o'zingizning bot tokeningizni kiriting
 
-# Foydalanuvchi xabari kelganda chiqariladi
+# Logging sozlamalari
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+)
+
+# Global set to track user chat IDs
+user_ids = set()
+
+# Har bir yangi xabarni qabul qilish
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
-    chat_id = update.effective_chat.id
-    text = update.message.text
+    message = update.message.text
+    user_info = f"\n📨 Yangi xabar!\n👤 Ism: {user.full_name}\n🔗 Username: @{user.username}\n🆔 Chat ID: {user.id}\n✉️ Xabar: {message}"
 
-    print("\n📨 Yangi xabar!")
-    print(f"👤 Ism: {user.full_name}")
-    print(f"🔗 Username: @{user.username}" if user.username else "🔗 Username: yo‘q")
-    print(f"🆔 Chat ID: {chat_id}")
-    print(f"✉️ Xabar: {text}\n")
+    print(user_info)
+    user_ids.add(user.id)
 
-    await update.message.reply_text("Xabaringiz qabul qilindi ✅ Tez orada javob olasiz.")
+    # Istalgan javob
+    await update.message.reply_text("Xabaringiz qabul qilindi!")
 
-# Admin javobi uchun /reply komandasi
-async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    args = context.args
-    if len(args) < 2:
-        await update.message.reply_text("❗ Foydalanish: /reply CHAT_ID xabar matni")
+# Reply funksiyasi
+async def reply_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if len(context.args) < 2:
+        await update.message.reply_text("Foydalanish: /reply [chat_id] [xabar]")
         return
 
-    chat_id = int(args[0])
-    message = " ".join(args[1:])
-
+    chat_id = int(context.args[0])
+    reply_text = " ".join(context.args[1:])
     try:
-        await context.bot.send_message(chat_id=chat_id, text=message)
-        await update.message.reply_text("✅ Javob yuborildi.")
+        await context.bot.send_message(chat_id=chat_id, text=reply_text)
+        await update.message.reply_text("Xabar yuborildi!")
     except Exception as e:
-        await update.message.reply_text(f"❌ Xatolik: {e}")
+        await update.message.reply_text(f"Xato yuz berdi: {e}")
 
-# Botni ishga tushirish
-app = ApplicationBuilder().token(TOKEN).build()
-app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-app.add_handler(CommandHandler("reply", reply))
-app.run_polling()
+# Asosiy funksiyani yaratish
+def main():
+    app = ApplicationBuilder().token(TOKEN).build()
+
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    app.add_handler(CommandHandler("reply", reply_command))
+
+    print("🤖 Bot ishga tushdi...")
+    app.run_polling()
+
+if __name__ == "__main__":
+    main()
