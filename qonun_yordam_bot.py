@@ -1,52 +1,46 @@
-import logging
 from telegram import Update
-from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, CommandHandler, filters
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 
-TOKEN = "YOUR_BOT_TOKEN_HERE"  # Bu yerga o'zingizning bot tokeningizni kiriting
+TOKEN = '7881698949:AAEMr_wFyMbE0lDtP5PegK8QmDuqhkLHKiw'  # ← bu yerga o'zingizning bot tokeningizni qo'ying
 
-# Logging sozlamalari
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
-)
+# /start buyrug'iga javob
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    print(f"📨 Yangi foydalanuvchi: {user.full_name} (@{user.username}) - ID: {user.id}")
 
-# Global set to track user chat IDs
-user_ids = set()
+    await update.message.reply_text(
+        "Assalomu alaykum! Men *Muattar Zokirova*.\n\n"
+        "🇰🇷 *Koreyada yashayotgan chet elliklar uchun* qonuniy maslahat va tarjima xizmatlari ko‘rsataman.\n\n"
+        "Quyidagi xizmatlardan birini tanlang:\n"
+        "1️⃣ Viza olish va uzaytirish\n"
+        "2️⃣ Advokat bilan maslahat\n"
+        "3️⃣ Hujjatlar tayyorlash\n"
+        "4️⃣ Konsultatsiyaga yozilish\n"
+        "5️⃣ Tarjima xizmati\n\n"
+        "⚠️ *Baʼzi xizmatlar pullik.* Narxlar oldindan aytiladi va sizga alohida xabar qilinadi.\n\n"
+        "💳 *To‘lov uchun hisob:*\n"
+        "*Muattar Zokirova*\n"
+        "Toss Bank 토스뱅크\n"
+        "`1001-2440-1345`",
+        parse_mode="Markdown"
+    )
 
-# Har bir yangi xabarni qabul qilish
+# Oddiy matnli xabarlarga javob
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
-    message = update.message.text
-    user_info = f"\n📨 Yangi xabar!\n👤 Ism: {user.full_name}\n🔗 Username: @{user.username}\n🆔 Chat ID: {user.id}\n✉️ Xabar: {message}"
+    text = update.message.text
+    print(f"\n📨 Xabar: {user.full_name} (@{user.username})\nID: {user.id}\n✉️: {text}\n")
 
-    print(user_info)
-    user_ids.add(user.id)
+    await update.message.reply_text("Xabaringiz qabul qilindi. Tez orada siz bilan bog‘lanamiz.")
 
-    # Istalgan javob
-    await update.message.reply_text("Xabaringiz qabul qilindi!")
-
-# Reply funksiyasi
-async def reply_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if len(context.args) < 2:
-        await update.message.reply_text("Foydalanish: /reply [chat_id] [xabar]")
-        return
-
-    chat_id = int(context.args[0])
-    reply_text = " ".join(context.args[1:])
-    try:
-        await context.bot.send_message(chat_id=chat_id, text=reply_text)
-        await update.message.reply_text("Xabar yuborildi!")
-    except Exception as e:
-        await update.message.reply_text(f"Xato yuz berdi: {e}")
-
-# Asosiy funksiyani yaratish
+# Botni ishga tushurish
 def main():
     app = ApplicationBuilder().token(TOKEN).build()
-
+    app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    app.add_handler(CommandHandler("reply", reply_command))
 
-    print("🤖 Bot ishga tushdi...")
+    print("✅ Bot ishga tushdi.")
     app.run_polling()
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
